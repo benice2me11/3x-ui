@@ -20,6 +20,7 @@ import (
 
 type CheckClientIpJob struct {
 	lastClear     int64
+	lastOffset    int64
 	disAllowedIps []string
 }
 
@@ -27,6 +28,7 @@ var job *CheckClientIpJob
 
 func NewCheckClientIpJob() *CheckClientIpJob {
 	job = new(CheckClientIpJob)
+	job.lastOffset = 0
 	return job
 }
 
@@ -112,7 +114,22 @@ func (j *CheckClientIpJob) processLogFile() bool {
 
 	accessLogPath, _ := xray.GetAccessLogPath()
 	file, _ := os.Open(accessLogPath)
+	if file == nil {
+		return false
+	}
 	defer file.Close()
+
+	if stat, err := file.Stat(); err == nil {
+		if j.lastOffset > stat.Size() {
+			j.lastOffset = 0
+		}
+	}
+
+	if _, err := file.Seek(j.lastOffset, io.SeekStart); err != nil {
+		j.checkError(err)
+		j.lastOffset = 0
+		file.Seek(0, io.SeekStart)
+	}
 
 	inboundClientIps := make(map[string]map[string]struct{}, 100)
 
@@ -141,6 +158,11 @@ func (j *CheckClientIpJob) processLogFile() bool {
 			inboundClientIps[email] = make(map[string]struct{})
 		}
 		inboundClientIps[email][ip] = struct{}{}
+	}
+
+	// record new offset for the next run
+	if off, err := file.Seek(0, io.SeekCurrent); err == nil {
+		j.lastOffset = off
 	}
 
 	shouldCleanLog := false
