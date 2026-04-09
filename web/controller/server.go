@@ -16,6 +16,15 @@ import (
 
 var filenameRegex = regexp.MustCompile(`^[a-zA-Z0-9_\-.]+$`)
 
+type hysteria2UserRequest struct {
+	Username string `json:"username" form:"username"`
+	Password string `json:"password" form:"password"`
+}
+
+type hysteria2KickRequest struct {
+	Users []string `json:"users" form:"users"`
+}
+
 // ServerController handles server management and status-related operations.
 type ServerController struct {
 	BaseController
@@ -53,6 +62,18 @@ func (a *ServerController) initRouter(g *gin.RouterGroup) {
 
 	g.POST("/stopXrayService", a.stopXrayService)
 	g.POST("/restartXrayService", a.restartXrayService)
+	g.GET("/hysteria2/status", a.hysteria2Status)
+	g.POST("/hysteria2/install", a.installHysteria2)
+	g.POST("/hysteria2/start", a.startHysteria2Service)
+	g.POST("/hysteria2/stop", a.stopHysteria2Service)
+	g.POST("/hysteria2/restart", a.restartHysteria2Service)
+	g.POST("/hysteria2/logs/:count", a.getHysteria2Logs)
+	g.GET("/hysteria2/users", a.getHysteria2Users)
+	g.POST("/hysteria2/users/enableUserpass", a.enableHysteria2Userpass)
+	g.POST("/hysteria2/users/add", a.addHysteria2User)
+	g.POST("/hysteria2/users/update", a.updateHysteria2User)
+	g.POST("/hysteria2/users/delete/:username", a.deleteHysteria2User)
+	g.POST("/hysteria2/users/kick/:username", a.kickHysteria2User)
 	g.POST("/installXray/:version", a.installXray)
 	g.POST("/updateGeofile", a.updateGeofile)
 	g.POST("/updateGeofile/:fileName", a.updateGeofile)
@@ -185,6 +206,91 @@ func (a *ServerController) restartXrayService(c *gin.Context) {
 		"Xray service has been restarted successfully",
 		"success",
 	)
+}
+
+// hysteria2Status returns current HY2 runtime status and traffic summary.
+func (a *ServerController) hysteria2Status(c *gin.Context) {
+	jsonObj(c, a.serverService.GetHysteria2Status(), nil)
+}
+
+// installHysteria2 downloads and installs HY2 from the official apernet release.
+func (a *ServerController) installHysteria2(c *gin.Context) {
+	err := a.serverService.InstallHysteria2()
+	jsonMsg(c, "HY2 install", err)
+}
+
+// startHysteria2Service starts HY2 systemd service.
+func (a *ServerController) startHysteria2Service(c *gin.Context) {
+	err := a.serverService.StartHysteria2Service()
+	jsonMsg(c, "HY2 start", err)
+}
+
+// stopHysteria2Service stops HY2 systemd service.
+func (a *ServerController) stopHysteria2Service(c *gin.Context) {
+	err := a.serverService.StopHysteria2Service()
+	jsonMsg(c, "HY2 stop", err)
+}
+
+// restartHysteria2Service restarts HY2 systemd service.
+func (a *ServerController) restartHysteria2Service(c *gin.Context) {
+	err := a.serverService.RestartHysteria2Service()
+	jsonMsg(c, "HY2 restart", err)
+}
+
+// getHysteria2Logs retrieves service logs from journald.
+func (a *ServerController) getHysteria2Logs(c *gin.Context) {
+	count := c.Param("count")
+	logs := a.serverService.GetHysteria2Logs(count)
+	jsonObj(c, logs, nil)
+}
+
+// getHysteria2Users returns managed users from HY2 auth.userpass and generated share links.
+func (a *ServerController) getHysteria2Users(c *gin.Context) {
+	hostOverride := c.Query("host")
+	obj, err := a.serverService.GetHysteria2Users(hostOverride)
+	jsonObj(c, obj, err)
+}
+
+// enableHysteria2Userpass switches HY2 auth.type to userpass mode.
+func (a *ServerController) enableHysteria2Userpass(c *gin.Context) {
+	err := a.serverService.EnableHysteria2Userpass()
+	jsonMsg(c, "HY2 auth mode", err)
+}
+
+// addHysteria2User appends a new user to HY2 auth.userpass.
+func (a *ServerController) addHysteria2User(c *gin.Context) {
+	req := hysteria2UserRequest{}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		jsonMsg(c, "HY2 add user", err)
+		return
+	}
+	err := a.serverService.AddHysteria2User(req.Username, req.Password)
+	jsonMsg(c, "HY2 add user", err)
+}
+
+// updateHysteria2User updates user password in HY2 auth.userpass.
+func (a *ServerController) updateHysteria2User(c *gin.Context) {
+	req := hysteria2UserRequest{}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		jsonMsg(c, "HY2 update user", err)
+		return
+	}
+	err := a.serverService.UpdateHysteria2User(req.Username, req.Password)
+	jsonMsg(c, "HY2 update user", err)
+}
+
+// deleteHysteria2User removes user from HY2 auth.userpass.
+func (a *ServerController) deleteHysteria2User(c *gin.Context) {
+	username := c.Param("username")
+	err := a.serverService.DeleteHysteria2User(username)
+	jsonMsg(c, "HY2 delete user", err)
+}
+
+// kickHysteria2User forcibly disconnects active sessions for given user.
+func (a *ServerController) kickHysteria2User(c *gin.Context) {
+	username := c.Param("username")
+	err := a.serverService.KickHysteria2Users([]string{username})
+	jsonMsg(c, "HY2 kick user", err)
 }
 
 // getLogs retrieves the application logs based on count, level, and syslog filters.

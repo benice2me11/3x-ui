@@ -1,0 +1,416 @@
+{{ template "page/head_start" .}}
+{{ template "page/head_end" .}}
+
+{{ template "page/body_start" .}}
+<a-layout id="app" v-cloak :class="themeSwitcher.currentTheme + ' hysteria2-page'">
+  <a-sidebar></a-sidebar>
+  <a-layout id="content-layout">
+    <a-layout-content>
+      <a-spin :spinning="loadingStates.spinning" :delay="300" :tip="loadingTip">
+        <transition name="list" appear>
+          <a-row v-if="!loadingStates.fetched">
+            <a-card
+              :style="{ textAlign: 'center', padding: '30px 0', marginTop: '10px', background: 'transparent', border: 'none' }">
+              <a-spin tip='{{ i18n "loading" }}'></a-spin>
+            </a-card>
+          </a-row>
+          <a-row :gutter="[isMobile ? 8 : 16, isMobile ? 0 : 12]" v-else>
+            <a-col>
+              <a-card hoverable>
+                <template #title>
+                  <a-space direction="horizontal">
+                    <span>Hysteria2 (apernet)</span>
+                    <a-tag v-if="status.version && status.version !== 'Unknown'" color="green">
+                      [[ status.version ]]
+                    </a-tag>
+                  </a-space>
+                </template>
+                <template #extra>
+                  <a-space direction="horizontal">
+                    <a-badge status="processing"
+                      :class="({ green: 'xray-running-animation', orange: 'xray-stop-animation' }[status.color]) || 'xray-processing-animation'"
+                      :text="status.stateMsg" :color="status.color" />
+                    <a-button icon="sync" size="small" @click="refreshAll"></a-button>
+                  </a-space>
+                </template>
+
+                <a-row :gutter="[8, 8]">
+                  <a-col :span="12"><a-tag color="blue">Users: [[ status.stats.users ]]</a-tag></a-col>
+                  <a-col :span="12"><a-tag color="purple">Online: [[ status.stats.online ]]</a-tag></a-col>
+                  <a-col :span="12"><a-tag color="green">TX: [[ SizeFormatter.sizeFormat(status.stats.tx) ]]</a-tag></a-col>
+                  <a-col :span="12"><a-tag color="orange">RX: [[ SizeFormatter.sizeFormat(status.stats.rx) ]]</a-tag></a-col>
+                </a-row>
+
+                <a-divider></a-divider>
+
+                <a-space direction="horizontal" :size="isMobile ? 'small' : 'middle'" wrap>
+                  <a-button icon="download" @click="installHysteria2">Install</a-button>
+                  <a-button icon="play-circle" type="primary" @click="startHysteria2Service">Start</a-button>
+                  <a-button icon="poweroff" @click="stopHysteria2Service">Stop</a-button>
+                  <a-button icon="reload" @click="restartHysteria2Service">Restart</a-button>
+                  <a-button icon="bars" @click="openHysteria2Logs">Logs</a-button>
+                </a-space>
+              </a-card>
+            </a-col>
+
+            <a-col>
+              <a-card title="Users" hoverable>
+                <a-spin :spinning="usersLoading">
+                  <a-alert v-if="usersAuthType !== 'userpass'" type="warning" show-icon
+                    message="HY2 auth.type must be userpass for per-user UI management">
+                    <template slot="description">
+                      Current auth.type: [[ usersAuthType || 'unknown' ]]
+                      <a-button type="primary" size="small" class="ml-10" @click="enableHysteria2Userpass">
+                        Enable userpass mode
+                      </a-button>
+                    </template>
+                  </a-alert>
+
+                  <template v-else>
+                    <a-form layout="inline">
+                      <a-form-item label="Host">
+                        <a-input v-model.trim="share.host" placeholder="example.com" style="width: 220px"></a-input>
+                      </a-form-item>
+                      <a-form-item label="Port">
+                        <a-input v-model.trim="share.port" disabled style="width: 90px"></a-input>
+                      </a-form-item>
+                      <a-form-item label="SNI">
+                        <a-input v-model.trim="share.sni" disabled style="width: 180px"></a-input>
+                      </a-form-item>
+                      <a-form-item>
+                        <a-button @click="fetchUsers">Refresh Links</a-button>
+                      </a-form-item>
+                    </a-form>
+
+                    <a-divider></a-divider>
+
+                    <a-form layout="inline">
+                      <a-form-item label="Username">
+                        <a-input v-model.trim="form.username" :disabled="editing" placeholder="alice"
+                          style="width: 170px"></a-input>
+                      </a-form-item>
+                      <a-form-item label="Password">
+                        <a-input v-model.trim="form.password" placeholder="strong-password"
+                          style="width: 220px"></a-input>
+                      </a-form-item>
+                      <a-form-item>
+                        <a-button type="primary" @click="saveUser">
+                          [[ editing ? 'Update' : 'Add' ]]
+                        </a-button>
+                      </a-form-item>
+                      <a-form-item v-if="editing">
+                        <a-button @click="resetUserForm">Cancel</a-button>
+                      </a-form-item>
+                    </a-form>
+
+                    <a-table :columns="isMobile ? userMobileColumns : userColumns" :data-source="users"
+                      :row-key="(u) => u.username" :pagination="false" :scroll="isMobile ? {} : { x: 980 }"
+                      :style="{ marginTop: '12px' }"
+                      :locale='{ emptyText: `{{ i18n "noData" }}` }'>
+                      <template slot="password" slot-scope="text, u">
+                        <a-tag>[[ u.password ]]</a-tag>
+                      </template>
+                      <template slot="online" slot-scope="text, u">
+                        <a-tag :color="u.online > 0 ? 'green' : 'default'">[[ u.online ]]</a-tag>
+                      </template>
+                      <template slot="traffic" slot-scope="text, u">
+                        <a-tag color="green">↑ [[ SizeFormatter.sizeFormat(u.tx || 0) ]]</a-tag>
+                        <a-tag color="blue">↓ [[ SizeFormatter.sizeFormat(u.rx || 0) ]]</a-tag>
+                      </template>
+                      <template slot="link" slot-scope="text, u">
+                        <span style="display: inline-block; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
+                          [[ u.link || '-' ]]
+                        </span>
+                      </template>
+                      <template slot="actions" slot-scope="text, u">
+                        <a-space>
+                          <a-button size="small" icon="edit" @click="startEditUser(u)"></a-button>
+                          <a-button size="small" icon="copy" @click="copyText(u.link)" :disabled="!u.link"></a-button>
+                          <a-button size="small" icon="disconnect" @click="kickUser(u.username)"></a-button>
+                          <a-button size="small" icon="delete" @click="deleteUser(u.username)"></a-button>
+                        </a-space>
+                      </template>
+                    </a-table>
+                  </template>
+                </a-spin>
+              </a-card>
+            </a-col>
+          </a-row>
+        </transition>
+      </a-spin>
+    </a-layout-content>
+  </a-layout>
+</a-layout>
+{{template "page/body_scripts" .}}
+{{template "component/aSidebar" .}}
+{{template "component/aThemeSwitch" .}}
+{{template "modals/textModal"}}
+<script>
+  const userColumns = [
+    { title: 'Username', dataIndex: 'username', align: 'center', width: 150 },
+    { title: 'Password', align: 'center', width: 150, scopedSlots: { customRender: 'password' } },
+    { title: 'Online', align: 'center', width: 90, scopedSlots: { customRender: 'online' } },
+    { title: 'Traffic', align: 'center', width: 190, scopedSlots: { customRender: 'traffic' } },
+    { title: 'Link', align: 'center', width: 330, scopedSlots: { customRender: 'link' } },
+    { title: 'Actions', align: 'center', width: 170, scopedSlots: { customRender: 'actions' } },
+  ];
+
+  const userMobileColumns = [
+    { title: 'User', dataIndex: 'username', align: 'center', width: 100 },
+    { title: 'Online', align: 'center', width: 70, scopedSlots: { customRender: 'online' } },
+    { title: 'Traffic', align: 'center', width: 160, scopedSlots: { customRender: 'traffic' } },
+    { title: 'Actions', align: 'center', width: 160, scopedSlots: { customRender: 'actions' } },
+  ];
+
+  function normalizeHysteria2Status(data) {
+    const status = {
+      state: 'stop',
+      stateMsg: 'Stopped',
+      errorMsg: '',
+      version: 'Unknown',
+      installed: false,
+      service: 'hysteria2',
+      stats: { users: 0, online: 0, streams: 0, tx: 0, rx: 0 },
+      color: 'orange',
+      ...data,
+    };
+
+    switch (status.state) {
+      case 'running':
+        status.color = 'green';
+        status.stateMsg = 'Running';
+        break;
+      case 'error':
+        status.color = 'red';
+        status.stateMsg = 'Error';
+        break;
+      case 'stop':
+        status.color = 'orange';
+        status.stateMsg = 'Stopped';
+        break;
+      default:
+        status.color = 'gray';
+        status.stateMsg = 'Unknown';
+        break;
+    }
+
+    if (!status.stats) {
+      status.stats = { users: 0, online: 0, streams: 0, tx: 0, rx: 0 };
+    }
+    return status;
+  }
+
+  const app = new Vue({
+    delimiters: ['[[', ']]'],
+    el: '#app',
+    mixins: [MediaQueryMixin],
+    data: {
+      themeSwitcher,
+      loadingStates: {
+        fetched: false,
+        spinning: false,
+      },
+      loadingTip: '{{ i18n "loading"}}',
+      status: normalizeHysteria2Status(),
+      usersLoading: false,
+      usersAuthType: '',
+      users: [],
+      share: {
+        host: '',
+        port: '443',
+        sni: '',
+      },
+      form: {
+        username: '',
+        password: '',
+      },
+      editing: false,
+      userColumns,
+      userMobileColumns,
+      refreshTimer: null,
+    },
+    methods: {
+      loading(spinning, tip = '{{ i18n "loading"}}') {
+        this.loadingStates.spinning = spinning;
+        this.loadingTip = tip;
+      },
+      async refreshAll() {
+        await this.fetchStatus();
+        await this.fetchUsers();
+      },
+      async fetchStatus() {
+        const msg = await HttpUtil.get('/panel/api/server/hysteria2/status');
+        if (!msg.success) {
+          return;
+        }
+        this.status = normalizeHysteria2Status(msg.obj || {});
+      },
+      async fetchUsers() {
+        this.usersLoading = true;
+        let url = '/panel/api/server/hysteria2/users';
+        if (this.share.host) {
+          url += `?host=${encodeURIComponent(this.share.host)}`;
+        }
+        const msg = await HttpUtil.get(url);
+        this.usersLoading = false;
+        if (!msg.success) {
+          return;
+        }
+
+        const obj = msg.obj || {};
+        this.usersAuthType = obj.authType || 'unknown';
+        this.users = obj.users || [];
+
+        const share = obj.share || {};
+        if (!this.share.host) {
+          this.share.host = share.host || '';
+        }
+        this.share.port = share.port || '443';
+        this.share.sni = share.sni || '';
+      },
+      async installHysteria2() {
+        this.loading(true, 'Installing Hysteria2...');
+        const msg = await HttpUtil.post('/panel/api/server/hysteria2/install');
+        this.loading(false);
+        if (!msg.success) {
+          return;
+        }
+        await this.refreshAll();
+      },
+      async startHysteria2Service() {
+        this.loading(true);
+        const msg = await HttpUtil.post('/panel/api/server/hysteria2/start');
+        this.loading(false);
+        if (!msg.success) {
+          return;
+        }
+        await this.fetchStatus();
+      },
+      async stopHysteria2Service() {
+        this.loading(true);
+        const msg = await HttpUtil.post('/panel/api/server/hysteria2/stop');
+        this.loading(false);
+        if (!msg.success) {
+          return;
+        }
+        await this.fetchStatus();
+      },
+      async restartHysteria2Service() {
+        this.loading(true);
+        const msg = await HttpUtil.post('/panel/api/server/hysteria2/restart');
+        this.loading(false);
+        if (!msg.success) {
+          return;
+        }
+        await this.fetchStatus();
+      },
+      async openHysteria2Logs() {
+        this.loading(true);
+        const msg = await HttpUtil.post('/panel/api/server/hysteria2/logs/200');
+        this.loading(false);
+        if (!msg.success) {
+          return;
+        }
+        const content = Array.isArray(msg.obj) ? msg.obj.join('\n') : String(msg.obj || '');
+        txtModal.show('hysteria2.log', content, 'hysteria2.log');
+      },
+      async enableHysteria2Userpass() {
+        this.usersLoading = true;
+        const msg = await HttpUtil.post('/panel/api/server/hysteria2/users/enableUserpass');
+        this.usersLoading = false;
+        if (!msg.success) {
+          return;
+        }
+        await this.fetchUsers();
+      },
+      startEditUser(user) {
+        this.form.username = user.username || '';
+        this.form.password = user.password || '';
+        this.editing = true;
+      },
+      resetUserForm() {
+        this.form.username = '';
+        this.form.password = '';
+        this.editing = false;
+      },
+      async saveUser() {
+        const username = (this.form.username || '').trim();
+        const password = (this.form.password || '').trim();
+        if (!username || !password) {
+          this.$message.error('Username and password are required');
+          return;
+        }
+
+        this.usersLoading = true;
+        const endpoint = this.editing
+          ? '/panel/api/server/hysteria2/users/update'
+          : '/panel/api/server/hysteria2/users/add';
+        const msg = await HttpUtil.post(endpoint, { username, password });
+        this.usersLoading = false;
+        if (!msg.success) {
+          return;
+        }
+
+        this.resetUserForm();
+        await this.fetchUsers();
+        await this.fetchStatus();
+      },
+      deleteUser(username) {
+        this.$confirm({
+          title: 'Delete Hysteria2 user',
+          content: `Delete user "${username}"?`,
+          okText: '{{ i18n "confirm"}}',
+          cancelText: '{{ i18n "cancel"}}',
+          class: themeSwitcher.currentTheme,
+          onOk: async () => {
+            this.usersLoading = true;
+            const msg = await HttpUtil.post(`/panel/api/server/hysteria2/users/delete/${encodeURIComponent(username)}`);
+            this.usersLoading = false;
+            if (!msg.success) {
+              return;
+            }
+            await this.fetchUsers();
+            await this.fetchStatus();
+          },
+        });
+      },
+      async kickUser(username) {
+        this.usersLoading = true;
+        const msg = await HttpUtil.post(`/panel/api/server/hysteria2/users/kick/${encodeURIComponent(username)}`);
+        this.usersLoading = false;
+        if (!msg.success) {
+          return;
+        }
+        await this.fetchUsers();
+        await this.fetchStatus();
+      },
+      copyText(content) {
+        if (!content) {
+          return;
+        }
+        ClipboardManager.copyText(content).then((ok) => {
+          if (ok) {
+            this.$message.success('{{ i18n "copied" }}');
+            return;
+          }
+          this.$message.error('Failed to copy');
+        });
+      },
+    },
+    async mounted() {
+      await this.refreshAll();
+      this.loadingStates.fetched = true;
+      this.refreshTimer = setInterval(() => {
+        this.fetchStatus();
+        this.fetchUsers();
+      }, 10000);
+    },
+    beforeDestroy() {
+      if (this.refreshTimer) {
+        clearInterval(this.refreshTimer);
+        this.refreshTimer = null;
+      }
+    },
+  });
+</script>
+{{ template "page/body_end" .}}

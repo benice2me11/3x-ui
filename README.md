@@ -30,6 +30,21 @@ bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.
 
 For full documentation, please visit the [project Wiki](https://github.com/MHSanaei/3x-ui/wiki).
 
+## Hysteria2 (apernet) Integration (Experimental)
+
+- The dashboard includes a dedicated `Hysteria2 (apernet)` card with `Install`, `Start`, `Stop`, `Restart`, and `Logs`.
+- HY2 user management is available in UI (`Users`):
+  - switch `auth.type` to `userpass`,
+  - add/update/delete users,
+  - kick active sessions,
+  - generate and copy `hysteria2://` links.
+- The installer downloads the latest official binary from `apernet/hysteria` and prepares:
+  - `/usr/local/bin/hysteria`
+  - `/etc/hysteria/config.yaml`
+  - `/etc/systemd/system/hysteria2.service`
+- Edit `/etc/hysteria/config.yaml` first (domain/auth/cert settings), then start the service from the dashboard.
+- Runtime monitoring reads HY2 traffic stats from `trafficStats.listen` / `trafficStats.secret` in that config.
+
 ## A Special Thanks to
 
 - [alireza0](https://github.com/alireza0/)

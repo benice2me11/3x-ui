@@ -71,11 +71,12 @@ type Status struct {
 		ErrorMsg string       `json:"errorMsg"`
 		Version  string       `json:"version"`
 	} `json:"xray"`
-	Uptime   uint64    `json:"uptime"`
-	Loads    []float64 `json:"loads"`
-	TcpCount int       `json:"tcpCount"`
-	UdpCount int       `json:"udpCount"`
-	NetIO    struct {
+	Hysteria2 Hysteria2Status `json:"hysteria2"`
+	Uptime    uint64          `json:"uptime"`
+	Loads     []float64       `json:"loads"`
+	TcpCount  int             `json:"tcpCount"`
+	UdpCount  int             `json:"udpCount"`
+	NetIO     struct {
 		Up   uint64 `json:"up"`
 		Down uint64 `json:"down"`
 	} `json:"netIO"`
@@ -402,6 +403,7 @@ func (s *ServerService) GetStatus(lastStatus *Status) *Status {
 		status.Xray.ErrorMsg = s.xrayService.GetXrayResult()
 	}
 	status.Xray.Version = s.xrayService.GetXrayVersion()
+	status.Hysteria2 = s.GetHysteria2Status()
 
 	// Application stats
 	var rtm runtime.MemStats
