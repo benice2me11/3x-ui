@@ -34,13 +34,12 @@ This repository also includes `auto-bootstrap.sh` for one-shot deployment on a f
 Example:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/mozaroc/x-ui-pro/main/auto-bootstrap.sh -o auto-bootstrap.sh
+curl -fsSL https://raw.githubusercontent.com/benice2me11/3x-ui/main/auto-bootstrap.sh -o auto-bootstrap.sh
 chmod +x auto-bootstrap.sh
 sudo ./auto-bootstrap.sh \
   -subdomain cdn-files.example.com \
   -reality_domain cdn-highload.example.com \
   -hy2_domain cdn-files.example.com \
-  -fork_repo mozaroc/x-ui-pro \
   -fork_ref main \
   -client_name first
 ```
