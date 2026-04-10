@@ -899,6 +899,9 @@ func getMapString(m map[string]any, key string) string {
 }
 
 func getAnyString(v any) string {
+	if v == nil {
+		return ""
+	}
 	switch t := v.(type) {
 	case string:
 		return strings.TrimSpace(t)
@@ -972,6 +975,9 @@ func buildHysteria2ShareConfig(cfg map[string]any, hostOverride string) Hysteria
 	if share.SNI == "" {
 		share.SNI = share.Host
 	}
+	if share.Host == "" && share.SNI != "" {
+		share.Host = share.SNI
+	}
 	share.Insecure = getMapBool(tlsCfg, "insecure")
 
 	obfs := ensureMap(cfg, "obfs")
@@ -1040,4 +1046,43 @@ func buildHysteria2Link(share Hysteria2ShareConfig, username, password string) s
 		link += "#" + neturl.QueryEscape(username)
 	}
 	return link
+}
+
+// GetHysteria2SubscriptionLinkByUsername builds a HY2 share link for a specific
+// subscription/user id using the server-side HY2 config.
+func GetHysteria2SubscriptionLinkByUsername(username, hostOverride string) (string, error) {
+	username = strings.TrimSpace(username)
+	if username == "" {
+		return "", fmt.Errorf("username is required")
+	}
+
+	cfg, err := loadHysteria2ConfigMap(hysteria2ConfigPath)
+	if err != nil {
+		return "", err
+	}
+
+	share := buildHysteria2ShareConfig(cfg, hostOverride)
+	auth := ensureMap(cfg, "auth")
+	authType := strings.ToLower(getMapString(auth, "type"))
+
+	switch authType {
+	case "userpass":
+		userpass := ensureMap(auth, "userpass")
+		password := strings.TrimSpace(getAnyString(userpass[username]))
+		if password == "" {
+			return "", fmt.Errorf("hysteria2 user %q not found", username)
+		}
+		return buildHysteria2Link(share, username, password), nil
+	case "password":
+		password := strings.TrimSpace(getMapString(auth, "password"))
+		if password == "" {
+			return "", fmt.Errorf("hysteria2 auth.password is empty")
+		}
+		return buildHysteria2Link(share, "", password), nil
+	default:
+		if authType == "" {
+			authType = "unknown"
+		}
+		return "", fmt.Errorf("unsupported hysteria2 auth.type %q", authType)
+	}
 }

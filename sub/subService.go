@@ -50,10 +50,6 @@ func (s *SubService) GetSubs(subId string, host string) ([]string, int64, xray.C
 		return nil, 0, traffic, err
 	}
 
-	if len(inbounds) == 0 {
-		return nil, 0, traffic, common.NewError("No inbounds found with ", subId)
-	}
-
 	s.datepicker, err = s.settingService.GetDatepicker()
 	if err != nil {
 		s.datepicker = "gregorian"
@@ -85,6 +81,17 @@ func (s *SubService) GetSubs(subId string, host string) ([]string, int64, xray.C
 				}
 			}
 		}
+	}
+
+	// Optionally append HY2 link when a matching HY2 user exists.
+	// This allows a single subscription id to carry both Xray-based links
+	// and a hysteria2:// link.
+	if hy2Link, err := service.GetHysteria2SubscriptionLinkByUsername(subId, ""); err == nil && hy2Link != "" {
+		result = append(result, hy2Link)
+	}
+
+	if len(result) == 0 {
+		return nil, 0, traffic, common.NewError("No inbounds found with ", subId)
 	}
 
 	// Prepare statistics
