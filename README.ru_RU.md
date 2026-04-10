@@ -30,6 +30,40 @@ bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.
 
 Полную документацию смотрите в [вики проекта](https://github.com/MHSanaei/3x-ui/wiki).
 
+## Автоматическая установка на VPS (Fork)
+
+В репозитории есть скрипт `auto-bootstrap.sh` для развёртывания на чистом VPS в один запуск:
+- ставит и настраивает 3x-ui + бинарник из вашего форка,
+- создаёт единый `subId` с `reality + ws + xhttp + grpc + hysteria2`,
+- настраивает TLS, nginx stream-маршрутизацию и JSON API-маску,
+- включает HY2 с `obfs: salamander`,
+- задаёт правила для JSON-подписки (`RU/private -> direct`, `ads/bittorrent -> block`).
+
+Пример запуска:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/<ваш-user>/3x-ui/main/auto-bootstrap.sh -o auto-bootstrap.sh
+chmod +x auto-bootstrap.sh
+sudo ./auto-bootstrap.sh \
+  -subdomain cdn-files.example.com \
+  -reality_domain cdn-highload.example.com \
+  -hy2_domain cdn-files.example.com \
+  -fork_repo <ваш-user>/3x-ui \
+  -fork_ref main \
+  -client_name first
+```
+
+Для VPS с маленькой RAM можно пропустить локальную сборку форка:
+
+```bash
+sudo SKIP_FORK_OVERLAY=1 ./auto-bootstrap.sh ...
+```
+
+Поведение подписок после установки:
+- Base64/URI подписка содержит все протоколы, включая HY2.
+- JSON-подписка содержит правила маршрутизации; в URI-линках правила маршрутизации не передаются.
+- Текущий генератор JSON не добавляет outbound HY2; HY2 остаётся доступен в URI-подписке.
+
 ## Интеграция Hysteria2 (apernet) (Экспериментально)
 
 - На главной странице добавлена отдельная карточка `Hysteria2 (apernet)` с действиями: `Install`, `Start`, `Stop`, `Restart`, `Logs`.

@@ -30,6 +30,40 @@ bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.
 
 For full documentation, please visit the [project Wiki](https://github.com/MHSanaei/3x-ui/wiki).
 
+## Automated VPS Bootstrap (Fork)
+
+This repository also includes `auto-bootstrap.sh` for one-shot deployment on a fresh VPS:
+- installs and configures 3x-ui + your fork binary,
+- provisions one subscription id with `reality + ws + xhttp + grpc + hysteria2`,
+- enables TLS, nginx stream routing, API-like JSON mask endpoints,
+- enables HY2 with `obfs: salamander`,
+- applies JSON subscription split-routing defaults (`RU/private -> direct`, `ads/bittorrent -> block`).
+
+Example:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/<your-user>/3x-ui/main/auto-bootstrap.sh -o auto-bootstrap.sh
+chmod +x auto-bootstrap.sh
+sudo ./auto-bootstrap.sh \
+  -subdomain cdn-files.example.com \
+  -reality_domain cdn-highload.example.com \
+  -hy2_domain cdn-files.example.com \
+  -fork_repo <your-user>/3x-ui \
+  -fork_ref main \
+  -client_name first
+```
+
+Low-memory servers can skip local fork build:
+
+```bash
+sudo SKIP_FORK_OVERLAY=1 ./auto-bootstrap.sh ...
+```
+
+Subscription behavior after install:
+- Base64 URI subscription contains all protocols, including HY2.
+- JSON subscription contains routing rules; URI links do not carry routing rules.
+- Current JSON generator does not include HY2 outbound; HY2 remains available in URI subscription.
+
 ## Hysteria2 (apernet) Integration (Experimental)
 
 - The dashboard includes a dedicated `Hysteria2 (apernet)` card with `Install`, `Start`, `Stop`, `Restart`, and `Logs`.
