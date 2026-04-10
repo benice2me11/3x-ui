@@ -288,6 +288,7 @@ configure_panel_and_inbounds() {
   local xray_bin out private_key public_key
   local client_id client_id2 client_id3 trojan_pass
   local now_ms
+  local sub_json_rules
 
   xray_bin=$(find /usr/local/x-ui/bin -maxdepth 1 -type f -name 'xray-linux-*' | head -n1)
   [[ -x "$xray_bin" ]] || die "xray core binary not found"
@@ -316,6 +317,10 @@ configure_panel_and_inbounds() {
 
   msg_inf "Configuring panel settings and creating auto inbounds"
 
+  # Split-routing profile for JSON subscriptions:
+  # RU/private destinations go direct, ads + bittorrent are blocked.
+  sub_json_rules='[{"type":"field","domain":["geosite:private","geosite:category-ru","geosite:ru","regexp:(^|\\.)[a-z0-9-]+\\.ru$","regexp:(^|\\.)[a-z0-9-]+\\.su$","regexp:(^|\\.)[a-z0-9-]+\\.xn--p1ai$"],"outboundTag":"direct"},{"type":"field","ip":["geoip:private","geoip:ru"],"outboundTag":"direct"},{"type":"field","domain":["geosite:category-ads-all"],"outboundTag":"block"},{"type":"field","protocol":["bittorrent"],"outboundTag":"block"}]'
+
   /usr/local/x-ui/x-ui setting \
     -username "${PANEL_USERNAME}" \
     -password "${PANEL_PASSWORD}" \
@@ -334,6 +339,7 @@ configure_panel_and_inbounds() {
   set_setting "subJsonPath" "/${JSON_PATH}/"
   set_setting "subURI" "https://${DOMAIN}/${SUB_PATH}/"
   set_setting "subJsonURI" "https://${DOMAIN}/${JSON_PATH}/"
+  set_setting "subJsonRules" "${sub_json_rules}"
   set_setting "subEncrypt" "true"
   set_setting "subShowInfo" "true"
 
