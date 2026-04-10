@@ -864,6 +864,11 @@ tls:
   key: /etc/letsencrypt/live/${HY2_DOMAIN}/privkey.pem
   sni: ${HY2_DOMAIN}
 
+obfs:
+  type: salamander
+  salamander:
+    password: ${HY2_OBFS_PASSWORD}
+
 masquerade:
   type: proxy
   proxy:
@@ -948,7 +953,7 @@ Subscription (json):
   https://${DOMAIN}/${JSON_PATH}/${CLIENT_NAME}
 
 HY2 direct link (fallback):
-  hysteria2://${CLIENT_NAME}:${HY2_PASSWORD}@${HY2_DOMAIN}:443/?sni=${HY2_DOMAIN}#${CLIENT_NAME}
+  hysteria2://${CLIENT_NAME}:${HY2_PASSWORD}@${HY2_DOMAIN}:443/?sni=${HY2_DOMAIN}&obfs=salamander&obfs-password=${HY2_OBFS_PASSWORD}#${CLIENT_NAME}
 
 Protocols provisioned in one subId (${CLIENT_NAME}):
   vless-reality, vless-ws, vless-xhttp, trojan-grpc, hysteria2
@@ -1034,6 +1039,7 @@ main() {
   PANEL_USERNAME="$(gen_random_string 10)"
   PANEL_PASSWORD="$(gen_random_string 14)"
   HY2_PASSWORD="$(gen_random_string 16)"
+  HY2_OBFS_PASSWORD="$(gen_random_string 24)"
 
   configure_panel_and_inbounds
   setup_nginx
