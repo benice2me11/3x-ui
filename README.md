@@ -22,14 +22,6 @@
 
 As an enhanced fork of the original X-UI project, 3X-UI provides improved stability, broader protocol support, and additional features.
 
-## Quick Start
-
-```bash
-bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
-```
-
-For full documentation, please visit the [project Wiki](https://github.com/MHSanaei/3x-ui/wiki).
-
 ## Automated VPS Bootstrap (Fork)
 
 This repository also includes `auto-bootstrap.sh` for one-shot deployment on a fresh VPS:
@@ -42,13 +34,13 @@ This repository also includes `auto-bootstrap.sh` for one-shot deployment on a f
 Example:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<your-user>/3x-ui/main/auto-bootstrap.sh -o auto-bootstrap.sh
+curl -fsSL https://raw.githubusercontent.com/mozaroc/x-ui-pro/main/auto-bootstrap.sh -o auto-bootstrap.sh
 chmod +x auto-bootstrap.sh
 sudo ./auto-bootstrap.sh \
   -subdomain cdn-files.example.com \
   -reality_domain cdn-highload.example.com \
   -hy2_domain cdn-files.example.com \
-  -fork_repo <your-user>/3x-ui \
+  -fork_repo mozaroc/x-ui-pro \
   -fork_ref main \
   -client_name first
 ```
@@ -63,6 +55,8 @@ Subscription behavior after install:
 - Base64 URI subscription contains all protocols, including HY2.
 - JSON subscription contains routing rules; URI links do not carry routing rules.
 - Current JSON generator does not include HY2 outbound; HY2 remains available in URI subscription.
+
+For full documentation, please visit the [project Wiki](https://github.com/MHSanaei/3x-ui/wiki).
 
 ## Hysteria2 (apernet) Integration (Experimental)
 
@@ -79,27 +73,10 @@ Subscription behavior after install:
 - Edit `/etc/hysteria/config.yaml` first (domain/auth/cert settings), then start the service from the dashboard.
 - Runtime monitoring reads HY2 traffic stats from `trafficStats.listen` / `trafficStats.secret` in that config.
 
-## A Special Thanks to
-
-- [alireza0](https://github.com/alireza0/)
-
 ## Acknowledgment
 
 - [Iran v2ray rules](https://github.com/chocolate4u/Iran-v2ray-rules) (License: **GPL-3.0**): _Enhanced v2ray/xray and v2ray/xray-clients routing rules with built-in Iranian domains and a focus on security and adblocking._
 - [Russia v2ray rules](https://github.com/runetfreedom/russia-v2ray-rules-dat) (License: **GPL-3.0**): _This repository contains automatically updated V2Ray routing rules based on data on blocked domains and addresses in Russia._
-
-## Support project
-
-**If this project is helpful to you, you may wish to give it a**:star2:
-
-<a href="https://www.buymeacoffee.com/MHSanaei" target="_blank">
-<img src="./media/default-yellow.png" alt="Buy Me A Coffee" style="height: 70px !important;width: 277px !important;" >
-</a>
-
-</br>
-<a href="https://nowpayments.io/donation/hsanaei" target="_blank" rel="noreferrer noopener">
-   <img src="./media/donation-button-black.svg" alt="Crypto donation button by NOWPayments">
-</a>
 
 ## Stargazers over Time
 

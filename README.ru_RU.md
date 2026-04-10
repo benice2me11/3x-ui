@@ -22,14 +22,6 @@
 
 Как улучшенная версия оригинального проекта X-UI, 3X-UI обеспечивает повышенную стабильность, более широкую поддержку протоколов и дополнительные функции.
 
-## Быстрый старт
-
-```
-bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
-```
-
-Полную документацию смотрите в [вики проекта](https://github.com/MHSanaei/3x-ui/wiki).
-
 ## Автоматическая установка на VPS (Fork)
 
 В репозитории есть скрипт `auto-bootstrap.sh` для развёртывания на чистом VPS в один запуск:
@@ -42,13 +34,13 @@ bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.
 Пример запуска:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<ваш-user>/3x-ui/main/auto-bootstrap.sh -o auto-bootstrap.sh
+curl -fsSL https://raw.githubusercontent.com/mozaroc/x-ui-pro/main/auto-bootstrap.sh -o auto-bootstrap.sh
 chmod +x auto-bootstrap.sh
 sudo ./auto-bootstrap.sh \
   -subdomain cdn-files.example.com \
   -reality_domain cdn-highload.example.com \
   -hy2_domain cdn-files.example.com \
-  -fork_repo <ваш-user>/3x-ui \
+  -fork_repo mozaroc/x-ui-pro \
   -fork_ref main \
   -client_name first
 ```
@@ -63,6 +55,8 @@ sudo SKIP_FORK_OVERLAY=1 ./auto-bootstrap.sh ...
 - Base64/URI подписка содержит все протоколы, включая HY2.
 - JSON-подписка содержит правила маршрутизации; в URI-линках правила маршрутизации не передаются.
 - Текущий генератор JSON не добавляет outbound HY2; HY2 остаётся доступен в URI-подписке.
+
+Полную документацию смотрите в [вики проекта](https://github.com/MHSanaei/3x-ui/wiki).
 
 ## Интеграция Hysteria2 (apernet) (Экспериментально)
 
@@ -79,27 +73,10 @@ sudo SKIP_FORK_OVERLAY=1 ./auto-bootstrap.sh ...
 - Перед запуском отредактируйте `/etc/hysteria/config.yaml` (домен, auth, сертификаты), затем запускайте сервис из UI.
 - Мониторинг трафика использует настройки `trafficStats.listen` и `trafficStats.secret` из этого конфига.
 
-## Особая благодарность
-
-- [alireza0](https://github.com/alireza0/)
-
 ## Благодарности
 
 - [Iran v2ray rules](https://github.com/chocolate4u/Iran-v2ray-rules) (Лицензия: **GPL-3.0**): _Улучшенные правила маршрутизации для v2ray/xray и v2ray/xray-clients со встроенными иранскими доменами и фокусом на безопасность и блокировку рекламы._
 - [Russia v2ray rules](https://github.com/runetfreedom/russia-v2ray-rules-dat) (Лицензия: **GPL-3.0**): _Этот репозиторий содержит автоматически обновляемые правила маршрутизации V2Ray на основе данных о заблокированных доменах и адресах в России._
-
-## Поддержка проекта
-
-**Если этот проект полезен для вас, вы можете поставить ему**:star2:
-
-<a href="https://www.buymeacoffee.com/MHSanaei" target="_blank">
-<img src="./media/default-yellow.png" alt="Buy Me A Coffee" style="height: 70px !important;width: 277px !important;" >
-</a>
-
-</br>
-<a href="https://nowpayments.io/donation/hsanaei" target="_blank" rel="noreferrer noopener">
-   <img src="./media/donation-button-black.svg" alt="Crypto donation button by NOWPayments">
-</a>
 
 ## Звезды с течением времени
 
