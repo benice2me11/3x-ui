@@ -25,13 +25,13 @@ As an enhanced fork of the original X-UI project, 3X-UI provides improved stabil
 ## Automated VPS Bootstrap (Fork)
 
 This repository also includes `auto-bootstrap.sh` for one-shot deployment on a fresh VPS:
-- installs and configures 3x-ui + your fork binary,
+- installs and configures 3x-ui + fork overlay build from `benice2me11/3x-ui` (default),
 - provisions one subscription id with `reality + ws + xhttp + grpc + hysteria2`,
 - enables TLS, nginx stream routing, API-like JSON mask endpoints,
 - enables HY2 with `obfs: salamander`,
 - applies JSON subscription split-routing defaults (`RU/private -> direct`, `ads/bittorrent -> block`).
 
-Example:
+Install from this fork:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/benice2me11/3x-ui/main/auto-bootstrap.sh -o auto-bootstrap.sh
@@ -44,6 +44,8 @@ sudo ./auto-bootstrap.sh \
   -client_name first
 ```
 
+`-fork_repo` is optional. By default the script uses `benice2me11/3x-ui`.
+
 Low-memory servers can skip local fork build:
 
 ```bash
@@ -55,7 +57,7 @@ Subscription behavior after install:
 - JSON subscription contains routing rules; URI links do not carry routing rules.
 - Current JSON generator does not include HY2 outbound; HY2 remains available in URI subscription.
 
-For full documentation, please visit the [project Wiki](https://github.com/MHSanaei/3x-ui/wiki).
+For full documentation, please visit the [fork Wiki](https://github.com/benice2me11/3x-ui/wiki).
 
 ## Hysteria2 (apernet) Integration (Experimental)
 

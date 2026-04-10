@@ -25,13 +25,13 @@
 ## Автоматическая установка на VPS (Fork)
 
 В репозитории есть скрипт `auto-bootstrap.sh` для развёртывания на чистом VPS в один запуск:
-- ставит и настраивает 3x-ui + бинарник из вашего форка,
+- ставит и настраивает 3x-ui + overlay-сборку из `benice2me11/3x-ui` (по умолчанию),
 - создаёт единый `subId` с `reality + ws + xhttp + grpc + hysteria2`,
 - настраивает TLS, nginx stream-маршрутизацию и JSON API-маску,
 - включает HY2 с `obfs: salamander`,
 - задаёт правила для JSON-подписки (`RU/private -> direct`, `ads/bittorrent -> block`).
 
-Пример запуска:
+Установка из этого форка:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/benice2me11/3x-ui/main/auto-bootstrap.sh -o auto-bootstrap.sh
@@ -44,6 +44,8 @@ sudo ./auto-bootstrap.sh \
   -client_name first
 ```
 
+Параметр `-fork_repo` не обязателен. По умолчанию скрипт использует `benice2me11/3x-ui`.
+
 Для VPS с маленькой RAM можно пропустить локальную сборку форка:
 
 ```bash
@@ -55,7 +57,7 @@ sudo SKIP_FORK_OVERLAY=1 ./auto-bootstrap.sh ...
 - JSON-подписка содержит правила маршрутизации; в URI-линках правила маршрутизации не передаются.
 - Текущий генератор JSON не добавляет outbound HY2; HY2 остаётся доступен в URI-подписке.
 
-Полную документацию смотрите в [вики проекта](https://github.com/MHSanaei/3x-ui/wiki).
+Полную документацию смотрите в [вики форка](https://github.com/benice2me11/3x-ui/wiki).
 
 ## Интеграция Hysteria2 (apernet) (Экспериментально)
 
